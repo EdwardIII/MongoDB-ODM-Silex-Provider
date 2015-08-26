@@ -3,7 +3,7 @@
 namespace Neutron\Silex\Provider;
 
 use Silex\Application;
-use Silex\ServiceProviderInterface;
+use Pimple\ServiceProviderInterface;
 use Doctrine\Common\EventManager;
 use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
 use Doctrine\MongoDB\Connection;
@@ -21,7 +21,7 @@ use Doctrine\ODM\MongoDB\Mapping\Driver\YamlDriver;
 class MongoDBODMServiceProvider implements ServiceProviderInterface
 {
 
-    public function register(Application $app)
+    public function register(\Pimple\Container $app)
     {
         $this->setDoctrineMongoDBDefaults($app);
         $this->loadDoctrineMongoDBConfiguration($app);
@@ -67,7 +67,7 @@ class MongoDBODMServiceProvider implements ServiceProviderInterface
 
     private function loadDoctrineMongoDBConfiguration(Application $app)
     {
-        $app['doctrine.odm.mongodb.configuration'] = $app->share(function () use ($app) {
+        $app['doctrine.odm.mongodb.configuration'] = function () use ($app) {
             $config = new Configuration;
 
             $config->setMetadataCacheImpl($app['doctrine.odm.mongodb.metadata_cache']);
@@ -121,30 +121,30 @@ class MongoDBODMServiceProvider implements ServiceProviderInterface
             $config->setLoggerCallable($app['doctrine.odm.mongodb.logger_callable']);
 
             return $config;
-        });
+        };
     }
 
     private function loadDoctrineMongoDBConnection(Application $app)
     {
-        $app['doctrine.mongodb.connection'] = $app->share(function () use ($app) {
+        $app['doctrine.mongodb.connection'] = function () use ($app) {
             return new Connection($app['doctrine.odm.mongodb.connection_options']['host'], 
                 isset($app['doctrine.odm.mongodb.connection_options']['options']) 
                     ? $app['doctrine.odm.mongodb.connection_options']['options']
                     : array(),
                 $app['doctrine.odm.mongodb.configuration']);
-        });
+        };
     }
 
     private function loadDoctrineMongoDBDocumentManager(Application $app)
     {
-        $app['doctrine.odm.mongodb.event_manager'] = $app->share(function () use ($app) {
+        $app['doctrine.odm.mongodb.event_manager'] = function () use ($app) {
             return new EventManager;
-        });
+        };
 
-        $app['doctrine.odm.mongodb.dm'] = $app->share(function () use ($app) {
+        $app['doctrine.odm.mongodb.dm'] = function () use ($app) {
             return DocumentManager::create(
                 $app['doctrine.mongodb.connection'], $app['doctrine.odm.mongodb.configuration'], $app['doctrine.odm.mongodb.event_manager']
             );
-        });
+        };
     }
 }
