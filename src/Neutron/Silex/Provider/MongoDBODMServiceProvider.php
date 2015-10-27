@@ -23,9 +23,6 @@ class MongoDBODMServiceProvider implements ServiceProviderInterface
 
     public function register(\Pimple\Container $app)
     {
-        $this->setDoctrineMongoDBDefaults($app);
-        $this->loadDoctrineMongoDBConfiguration($app);
-        $this->loadDoctrineMongoDBConnection($app);
         $this->loadDoctrineMongoDBDocumentManager($app);
     }
 
@@ -142,6 +139,10 @@ class MongoDBODMServiceProvider implements ServiceProviderInterface
         };
 
         $app['doctrine.odm.mongodb.dm'] = function () use ($app) {
+            $this->setDoctrineMongoDBDefaults($app);
+            $this->loadDoctrineMongoDBConfiguration($app);
+            $this->loadDoctrineMongoDBConnection($app);
+
             return DocumentManager::create(
                 $app['doctrine.mongodb.connection'], $app['doctrine.odm.mongodb.configuration'], $app['doctrine.odm.mongodb.event_manager']
             );
