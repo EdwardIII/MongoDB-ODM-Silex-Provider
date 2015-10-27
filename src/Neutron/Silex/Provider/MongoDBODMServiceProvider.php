@@ -30,16 +30,22 @@ class MongoDBODMServiceProvider implements ServiceProviderInterface
     {
     }
 
-    private function setDoctrineMongoDBDefaults(Application $app)
+    private function getConnnectionOptions($app, $fieldName = null)
     {
-        // default connection options
         $options = isset($app['doctrine.odm.mongodb.connection_options']) ? $app['doctrine.odm.mongodb.connection_options'] : array();
-        $app['doctrine.odm.mongodb.connection_options'] = array_replace(array(
+        $newConnectionOptions = array_replace(array(
             'database' => null,
             'host'     => null,
             'options'  => array()
-        ), $options);
+        ), $app['doctrine.odm.mongodb.connection_options']);
 
+        if($fieldName)
+            return $newConnectionOptions[$fieldName];
+        return $newConnectionOptions;
+    }
+
+    private function setDoctrineMongoDBDefaults(Application $app)
+    {
         // default extension options
         $defaults = array(
             'documents'               => array(
@@ -69,8 +75,8 @@ class MongoDBODMServiceProvider implements ServiceProviderInterface
 
             $config->setMetadataCacheImpl($app['doctrine.odm.mongodb.metadata_cache']);
 
-            if (isset($app['doctrine.odm.mongodb.connection_options']['database'])) {
-                $config->setDefaultDB($app['doctrine.odm.mongodb.connection_options']['database']);
+            if (!empty($this->getConnnectionOptions($app, 'database'))) {
+                $config->setDefaultDB($this->getConnnectionOptions($app, 'database'));
             }
 
             $chain = new MappingDriverChain();
@@ -124,9 +130,9 @@ class MongoDBODMServiceProvider implements ServiceProviderInterface
     private function loadDoctrineMongoDBConnection(Application $app)
     {
         $app['doctrine.mongodb.connection'] = function () use ($app) {
-            return new Connection($app['doctrine.odm.mongodb.connection_options']['host'], 
-                isset($app['doctrine.odm.mongodb.connection_options']['options']) 
-                    ? $app['doctrine.odm.mongodb.connection_options']['options']
+            return new Connection($this->getConnnectionOptions($app, 'host'), 
+                !empty($this->getConnnectionOptions($app, 'options')) 
+                    ? $this->getConnnectionOptions($app, 'options')
                     : array(),
                 $app['doctrine.odm.mongodb.configuration']);
         };
